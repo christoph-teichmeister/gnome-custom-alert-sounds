@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.custom-alert-sounds"
+          path="/org/gnome/shell/extensions/custom-alert-sounds/">
+    <key name="custom-sounds-dir" type="s">
+      <default>''</default>
+      <summary>Custom sounds directory</summary>
+      <description>Directory scanned for custom alert sound files. Empty string uses ~/.local/share/custom-alerts</description>
+    </key>
+  </schema>
+</schemalist>
