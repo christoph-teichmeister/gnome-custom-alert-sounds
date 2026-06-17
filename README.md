@@ -10,6 +10,16 @@ directly from Quick Settings — no `sudo` required.
 - Preview any sound before selecting it
 - Changes take effect immediately — no restart needed
 
+## Screenshots
+
+*Alert Sound toggle in Quick Settings*
+
+![Alert Sound toggle in Quick Settings](images/quick-settings.png)
+
+*Sound picker with built-in and custom sounds*
+
+![Sound picker with built-in and custom sounds](images/sound-picker.png)
+
 ## Requirements
 
 - GNOME Shell 45–50
