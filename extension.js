@@ -1,6 +1,5 @@
 import GObject from 'gi://GObject';
 import Gio from 'gi://Gio';
-import Meta from 'gi://Meta';
 import St from 'gi://St';
 import Clutter from 'gi://Clutter';
 
@@ -99,12 +98,6 @@ class AlertSoundToggle extends QuickMenuToggle {
                 this._manager.previewSound(sound.path);
             });
             previewBtn.connect_after('button-release-event', () => Clutter.EVENT_STOP);
-            previewBtn.connect('enter-event', () => {
-                global.display.set_cursor(Meta.Cursor.POINTING_HAND);
-            });
-            previewBtn.connect('leave-event', () => {
-                global.display.set_cursor(Meta.Cursor.DEFAULT);
-            });
             item.add_child(previewBtn);
         }
 

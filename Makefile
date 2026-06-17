@@ -1,4 +1,4 @@
-UUID     = custom-alert-sounds@teichmeister.de
+UUID     = custom-alert-sounds@christoph-teichmeister.github.io
 INST_DIR = $(HOME)/.local/share/gnome-shell/extensions/$(UUID)
 
 .PHONY: all schemas install uninstall enable disable package clean

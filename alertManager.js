@@ -19,6 +19,11 @@ export class AlertManager {
         this._settings = settings;
         this._desktopSettings = new Gio.Settings({schema_id: 'org.gnome.desktop.sound'});
         this._monitor = null;
+        this._monitorHandlerId = 0;
+        this._dirSignalId = 0;
+
+        const theme = this._desktopSettings.get_string('theme-name');
+        this._originalTheme = theme !== '__custom' ? theme : 'freedesktop';
     }
 
     get customSoundsDir() {
@@ -110,7 +115,7 @@ export class AlertManager {
             this._desktopSettings.set_boolean('event-sounds', true);
 
             if (sound.id === 'default') {
-                this._desktopSettings.set_string('theme-name', 'Yaru');
+                this._desktopSettings.set_string('theme-name', this._originalTheme);
                 return;
             }
 
@@ -118,12 +123,17 @@ export class AlertManager {
 
             for (const bellFile of BELL_FILES) {
                 const linkFile = Gio.File.new_for_path(`${GNOME_CUSTOM_DIR}/${bellFile}`);
-                try { linkFile.delete(null); } catch (_) {}
+                try {
+                    linkFile.delete(null);
+                } catch (e) {
+                    if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.NOT_FOUND))
+                        throw e;
+                }
                 linkFile.make_symbolic_link(sound.path, null);
             }
 
             // Toggle theme to force GNOME Shell sound cache reload
-            this._desktopSettings.set_string('theme-name', 'Yaru');
+            this._desktopSettings.set_string('theme-name', this._originalTheme);
             this._desktopSettings.set_string('theme-name', '__custom');
         } catch (e) {
             console.error(`[custom-alert-sounds] setSound: ${e.message}`);
@@ -142,10 +152,13 @@ export class AlertManager {
 
     watchCustomDir(callback) {
         this._startMonitor(callback);
-        this._settings.connect('changed::custom-sounds-dir', () => {
+        this._dirSignalId = this._settings.connect('changed::custom-sounds-dir', () => {
             if (this._monitor) {
+                if (this._monitorHandlerId)
+                    this._monitor.disconnect(this._monitorHandlerId);
                 this._monitor.cancel();
                 this._monitor = null;
+                this._monitorHandlerId = 0;
             }
             this._startMonitor(callback);
 
@@ -165,7 +178,7 @@ export class AlertManager {
         try {
             const dir = Gio.File.new_for_path(this.customSoundsDir);
             this._monitor = dir.monitor_directory(Gio.FileMonitorFlags.NONE, null);
-            this._monitor.connect('changed', () => callback());
+            this._monitorHandlerId = this._monitor.connect('changed', () => callback());
         } catch (e) {
             console.error(`[custom-alert-sounds] _startMonitor: ${e.message}`);
         }
@@ -179,8 +192,15 @@ export class AlertManager {
 
     destroy() {
         if (this._monitor) {
+            if (this._monitorHandlerId)
+                this._monitor.disconnect(this._monitorHandlerId);
             this._monitor.cancel();
             this._monitor = null;
+            this._monitorHandlerId = 0;
+        }
+        if (this._dirSignalId) {
+            this._settings.disconnect(this._dirSignalId);
+            this._dirSignalId = 0;
         }
         this._desktopSettings = null;
         this._settings = null;
