@@ -13,6 +13,7 @@ export class AlertManager {
         this._monitor = null;
         this._monitorHandlerId = 0;
         this._dirSignalId = 0;
+        this._currentProc = null;
 
         const theme = this._desktopSettings.get_string('theme-name');
         this._originalTheme = theme !== '__custom' ? theme : 'freedesktop';
@@ -142,41 +143,68 @@ export class AlertManager {
     previewSound(path) {
         if (!path)
             return;
-        const player = ['paplay', 'pw-play', 'aplay']
-            .map(p => GLib.find_program_in_path(p))
-            .find(p => p !== null);
+
+        const candidates = path.toLowerCase().endsWith('.wav')
+            ? ['paplay', 'pw-play', 'aplay']
+            : ['paplay', 'pw-play'];
+
+        let player = null;
+        for (const p of candidates) {
+            player = GLib.find_program_in_path(p);
+            if (player)
+                break;
+        }
+
         if (!player) {
-            console.error('[custom-alert-sounds] previewSound: no audio player found (paplay/pw-play/aplay)');
+            console.error('[custom-alert-sounds] previewSound: no audio player found (paplay/pw-play)');
             return;
         }
+
+        if (this._currentProc) {
+            try { this._currentProc.force_exit(); } catch (_) {}
+            this._currentProc = null;
+        }
+
         try {
             const proc = new Gio.Subprocess({
                 argv: [player, path],
-                flags: Gio.SubprocessFlags.NONE,
+                flags: Gio.SubprocessFlags.STDOUT_SILENCE | Gio.SubprocessFlags.STDERR_SILENCE,
             });
             proc.init(null);
+            this._currentProc = proc;
+            proc.wait_async(null, () => {
+                if (this._currentProc === proc)
+                    this._currentProc = null;
+            });
         } catch (e) {
             console.error(`[custom-alert-sounds] previewSound: ${e.message}`);
+        }
+    }
+
+    _stopMonitor() {
+        if (this._monitor) {
+            if (this._monitorHandlerId)
+                this._monitor.disconnect(this._monitorHandlerId);
+            this._monitor.cancel();
+            this._monitor = null;
+            this._monitorHandlerId = 0;
         }
     }
 
     watchCustomDir(callback) {
         this._startMonitor(callback);
         this._dirSignalId = this._settings.connect('changed::custom-sounds-dir', () => {
-            if (this._monitor) {
-                if (this._monitorHandlerId)
-                    this._monitor.disconnect(this._monitorHandlerId);
-                this._monitor.cancel();
-                this._monitor = null;
-                this._monitorHandlerId = 0;
-            }
+            this._stopMonitor();
             this._startMonitor(callback);
 
             const currentId = this.getCurrentSound();
             if (currentId.startsWith('custom:')) {
                 const still = this.getCustomSounds().find(s => s.id === currentId);
-                if (!still)
-                    this.setSound(this.getBuiltinSounds().find(s => s.id === 'default'));
+                if (!still) {
+                    const defaultSound = this.getBuiltinSounds().find(s => s.id === 'default');
+                    if (defaultSound)
+                        this.setSound(defaultSound);
+                }
             }
 
             callback();
@@ -201,13 +229,11 @@ export class AlertManager {
     }
 
     destroy() {
-        if (this._monitor) {
-            if (this._monitorHandlerId)
-                this._monitor.disconnect(this._monitorHandlerId);
-            this._monitor.cancel();
-            this._monitor = null;
-            this._monitorHandlerId = 0;
+        if (this._currentProc) {
+            try { this._currentProc.force_exit(); } catch (_) {}
+            this._currentProc = null;
         }
+        this._stopMonitor();
         if (this._dirSignalId) {
             this._settings.disconnect(this._dirSignalId);
             this._dirSignalId = 0;

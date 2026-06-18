@@ -2,6 +2,7 @@
     "name": "Custom Alert Sounds",
     "description": "Add custom .ogg files as GNOME alert sounds from Quick Settings — no sudo required.",
     "uuid": "custom-alert-sounds@christoph-teichmeister.github.io",
+    "version": 1,
     "shell-version": ["45", "46", "47", "48", "49", "50"],
     "url": "https://github.com/christoph-teichmeister/gnome-custom-alert-sounds",
     "settings-schema": "org.gnome.shell.extensions.custom-alert-sounds",

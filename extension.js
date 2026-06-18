@@ -1,4 +1,3 @@
-import Atk from 'gi://Atk';
 import GObject from 'gi://GObject';
 import Gio from 'gi://Gio';
 import St from 'gi://St';
@@ -121,10 +120,6 @@ class AlertSoundToggle extends QuickMenuToggle {
             item.setOrnament(isSelected
                 ? PopupMenu.Ornament.DOT
                 : PopupMenu.Ornament.NONE);
-            if (isSelected)
-                item.add_accessible_state(Atk.StateType.CHECKED);
-            else
-                item.remove_accessible_state(Atk.StateType.CHECKED);
         }
 
         const allSounds = [

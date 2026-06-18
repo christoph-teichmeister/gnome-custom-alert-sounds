@@ -60,7 +60,10 @@ export default class CustomAlertSoundsPreferences extends ExtensionPreferences {
                         settings.set_string('custom-sounds-dir', path);
                         row.subtitle = path;
                     }
-                } catch (_) {}
+                } catch (e) {
+                    if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
+                        console.error(`[custom-alert-sounds] select_folder: ${e.message}`);
+                }
             });
         });
         row.add_suffix(changeBtn);

@@ -29,7 +29,7 @@ pot:
 		extension.js prefs.js alertManager.js
 
 update-po: pot
-	for lang in $(LANGS); do \
+	set -e; for lang in $(LANGS); do \
 		$(MSGMERGE) --update po/$$lang.po po/$(DOMAIN).pot; \
 	done
 
