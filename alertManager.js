@@ -1,14 +1,6 @@
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
-
-const BUILTIN_SOUNDS = [
-    {id: 'none',    label: 'None',    path: null},
-    {id: 'default', label: 'Default', path: null},
-    {id: 'click',   label: 'Click',   path: '/usr/share/sounds/gnome/default/alerts/click.ogg'},
-    {id: 'string',  label: 'String',  path: '/usr/share/sounds/gnome/default/alerts/string.ogg'},
-    {id: 'swing',   label: 'Swing',   path: '/usr/share/sounds/gnome/default/alerts/swing.ogg'},
-    {id: 'hum',     label: 'Hum',     path: '/usr/share/sounds/gnome/default/alerts/hum.ogg'},
-];
+import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
 const GNOME_CUSTOM_DIR = `${GLib.get_home_dir()}/.local/share/sounds/__custom`;
 const BELL_FILES = ['bell-terminal.ogg', 'bell-window-system.ogg'];
@@ -32,7 +24,14 @@ export class AlertManager {
     }
 
     getBuiltinSounds() {
-        return [...BUILTIN_SOUNDS];
+        return [
+            {id: 'none',    label: _('None'),    path: null},
+            {id: 'default', label: _('Default'), path: null},
+            {id: 'click',   label: _('Click'),   path: '/usr/share/sounds/gnome/default/alerts/click.ogg'},
+            {id: 'string',  label: _('String'),  path: '/usr/share/sounds/gnome/default/alerts/string.ogg'},
+            {id: 'swing',   label: _('Swing'),   path: '/usr/share/sounds/gnome/default/alerts/swing.ogg'},
+            {id: 'hum',     label: _('Hum'),     path: '/usr/share/sounds/gnome/default/alerts/hum.ogg'},
+        ];
     }
 
     getCustomSounds() {
@@ -90,7 +89,7 @@ export class AlertManager {
 
             const target = fileInfo.get_symlink_target();
 
-            const builtin = BUILTIN_SOUNDS.find(s => s.path === target);
+            const builtin = this.getBuiltinSounds().find(s => s.path === target);
             if (builtin)
                 return builtin.id;
 
@@ -143,8 +142,19 @@ export class AlertManager {
     previewSound(path) {
         if (!path)
             return;
+        const player = ['paplay', 'pw-play', 'aplay']
+            .map(p => GLib.find_program_in_path(p))
+            .find(p => p !== null);
+        if (!player) {
+            console.error('[custom-alert-sounds] previewSound: no audio player found (paplay/pw-play/aplay)');
+            return;
+        }
         try {
-            GLib.spawn_command_line_async(`/usr/bin/paplay '${path.replace(/'/g, "'\\''")}'`);
+            const proc = new Gio.Subprocess({
+                argv: [player, path],
+                flags: Gio.SubprocessFlags.NONE,
+            });
+            proc.init(null);
         } catch (e) {
             console.error(`[custom-alert-sounds] previewSound: ${e.message}`);
         }
@@ -166,7 +176,7 @@ export class AlertManager {
             if (currentId.startsWith('custom:')) {
                 const still = this.getCustomSounds().find(s => s.id === currentId);
                 if (!still)
-                    this.setSound({id: 'default', label: 'Default', path: null});
+                    this.setSound(this.getBuiltinSounds().find(s => s.id === 'default'));
             }
 
             callback();

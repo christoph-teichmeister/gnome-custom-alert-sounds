@@ -1,0 +1,64 @@
+# Traduction française pour Custom Alert Sounds
+# Copyright (C) 2024 Christoph Teichmeister
+# This file is distributed under the same license as the Custom Alert Sounds package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Custom Alert Sounds\n"
+"Report-Msgid-Bugs-To: https://github.com/christoph-teichmeister/gnome-custom-alert-sounds/issues\n"
+"PO-Revision-Date: 2024-01-01 00:00+0000\n"
+"Last-Translator: Christoph Teichmeister <christoph.teichmeister@mail.com>\n"
+"Language-Team: French\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: extension.js
+msgid "Alert Sound"
+msgstr "Son d'alerte"
+
+#: extension.js
+msgid "Custom"
+msgstr "Personnalisé"
+
+#: extension.js
+msgid "Open Sounds Folder"
+msgstr "Ouvrir le dossier des sons"
+
+#: extension.js
+msgid "No custom sounds yet"
+msgstr "Aucun son personnalisé pour l'instant"
+
+#: prefs.js
+msgid "Settings"
+msgstr "Paramètres"
+
+#: prefs.js
+msgid "Custom Sounds"
+msgstr "Sons personnalisés"
+
+#: prefs.js
+msgid "Drop .ogg, .oga, or .wav files into the directory below to add them as alert sounds."
+msgstr "Déposez des fichiers .ogg, .oga ou .wav dans le répertoire ci-dessous pour les ajouter comme sons d'alerte."
+
+#: prefs.js
+msgid "Sounds Directory"
+msgstr "Répertoire des sons"
+
+#: prefs.js
+msgid "Open"
+msgstr "Ouvrir"
+
+#: prefs.js
+msgid "Change…"
+msgstr "Modifier…"
+
+#: prefs.js
+msgid "Select Sounds Directory"
+msgstr "Sélectionner le répertoire des sons"
+
+#: prefs.js
+msgid "Reset"
+msgstr "Réinitialiser"

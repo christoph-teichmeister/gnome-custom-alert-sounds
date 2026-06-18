@@ -75,9 +75,10 @@ export default class CustomAlertSoundsPreferences extends ExtensionPreferences {
         });
         row.add_suffix(resetBtn);
 
-        settings.connect('changed::custom-sounds-dir', () => {
+        const signalId = settings.connect('changed::custom-sounds-dir', () => {
             row.subtitle = settings.get_string('custom-sounds-dir') || defaultDir;
         });
+        window.connect('destroy', () => settings.disconnect(signalId));
 
         group.add(row);
     }

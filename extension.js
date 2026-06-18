@@ -1,3 +1,4 @@
+import Atk from 'gi://Atk';
 import GObject from 'gi://GObject';
 import Gio from 'gi://Gio';
 import St from 'gi://St';
@@ -89,6 +90,8 @@ class AlertSoundToggle extends QuickMenuToggle {
         if (sound.path) {
             const previewBtn = new St.Button({
                 icon_name: 'media-playback-start-symbolic',
+                accessible_name: _('Preview'),
+                can_focus: true,
                 style_class: 'icon-button',
                 y_align: Clutter.ActorAlign.CENTER,
                 x_align: Clutter.ActorAlign.END,
@@ -114,9 +117,14 @@ class AlertSoundToggle extends QuickMenuToggle {
         const currentId = this._manager.getCurrentSound();
 
         for (const [id, item] of this._items) {
-            item.setOrnament(id === currentId
+            const isSelected = id === currentId;
+            item.setOrnament(isSelected
                 ? PopupMenu.Ornament.DOT
                 : PopupMenu.Ornament.NONE);
+            if (isSelected)
+                item.add_accessible_state(Atk.StateType.CHECKED);
+            else
+                item.remove_accessible_state(Atk.StateType.CHECKED);
         }
 
         const allSounds = [

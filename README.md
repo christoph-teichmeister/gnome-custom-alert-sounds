@@ -24,6 +24,7 @@ directly from Quick Settings — no `sudo` required.
 
 - GNOME Shell 45–50
 - `glib-compile-schemas` (part of `libglib2.0-dev` / `glib2-devel`)
+- For sound preview: `paplay` (PulseAudio), `pw-play` (PipeWire), or `aplay` (ALSA) — one is usually pre-installed
 
 ## Installation
 
@@ -45,9 +46,7 @@ Log out and back in (or restart the shell with `Alt+F2` → `r`) if the extensio
 ## Adding Custom Sounds
 
 1. Open Quick Settings and click the **Alert Sound** toggle menu.
-2. Click **Open Sounds Folder** — this opens
-   `~/.local/share/gnome-shell/extensions/custom-alert-sounds@christoph-teichmeister.github.io/sounds/` (created on
-   first run).
+2. Click **Open Sounds Folder** — this opens `~/.local/share/custom-alerts/` (created on first run).
 3. Drop any `.ogg`, `.oga`, or `.wav` file into that folder. It appears in the menu instantly.
 
 ## Development
