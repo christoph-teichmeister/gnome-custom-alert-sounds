@@ -52,7 +52,7 @@ package: schemas translations
 	mkdir -p dist
 	zip -r "dist/$(UUID).zip" \
 		extension.js alertManager.js prefs.js metadata.json schemas/ locale/ \
-		--exclude "schemas/*.compiled"
+		--exclude "schemas/gschemas.compiled"
 	@echo "Package: dist/$(UUID).zip"
 	@echo "Upload: https://extensions.gnome.org/upload/"
 

@@ -2,6 +2,8 @@ import Gio from "gi://Gio";
 import GLib from "gi://GLib";
 import { gettext as _ } from "resource:///org/gnome/shell/extensions/extension.js";
 
+const DEBUG = false;
+
 const GNOME_CUSTOM_DIR = `${GLib.get_home_dir()}/.local/share/sounds/__custom`;
 const BELL_FILES = ["bell-terminal.ogg", "bell-window-system.ogg"];
 const SOUND_EXTENSIONS = [".ogg", ".oga", ".wav"];
@@ -78,7 +80,8 @@ export class AlertManager {
       }
       enumerator.close(null);
     } catch (e) {
-      console.error(`[custom-alert-sounds] getCustomSounds: ${e.message}`);
+      if (DEBUG)
+        console.error(`[custom-alert-sounds] getCustomSounds: ${e.message}`);
     }
     return sounds.sort((a, b) => a.label.localeCompare(b.label));
   }
@@ -111,7 +114,8 @@ export class AlertManager {
 
       return target;
     } catch (e) {
-      console.error(`[custom-alert-sounds] getCurrentSound: ${e.message}`);
+      if (DEBUG)
+        console.error(`[custom-alert-sounds] getCurrentSound: ${e.message}`);
       return "default";
     }
   }
@@ -148,7 +152,7 @@ export class AlertManager {
       this._desktopSettings.set_string("theme-name", this._originalTheme);
       this._desktopSettings.set_string("theme-name", "__custom");
     } catch (e) {
-      console.error(`[custom-alert-sounds] setSound: ${e.message}`);
+      if (DEBUG) console.error(`[custom-alert-sounds] setSound: ${e.message}`);
     }
   }
 
@@ -166,9 +170,10 @@ export class AlertManager {
     }
 
     if (!player) {
-      console.error(
-        "[custom-alert-sounds] previewSound: no audio player found (paplay/pw-play)",
-      );
+      if (DEBUG)
+        console.error(
+          "[custom-alert-sounds] previewSound: no audio player found (paplay/pw-play)",
+        );
       return;
     }
 
@@ -192,7 +197,8 @@ export class AlertManager {
         if (this._currentProc === proc) this._currentProc = null;
       });
     } catch (e) {
-      console.error(`[custom-alert-sounds] previewSound: ${e.message}`);
+      if (DEBUG)
+        console.error(`[custom-alert-sounds] previewSound: ${e.message}`);
     }
   }
 
@@ -239,7 +245,8 @@ export class AlertManager {
         callback(),
       );
     } catch (e) {
-      console.error(`[custom-alert-sounds] _startMonitor: ${e.message}`);
+      if (DEBUG)
+        console.error(`[custom-alert-sounds] _startMonitor: ${e.message}`);
     }
   }
 

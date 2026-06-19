@@ -121,6 +121,16 @@ const AlertSoundToggle = GObject.registerClass(
       this._items.set(sound.id, item);
     }
 
+    destroy() {
+      this._builtinSection.destroy();
+      this._builtinSection = null;
+      this._customSeparator.destroy();
+      this._customSeparator = null;
+      this._customSection.destroy();
+      this._customSection = null;
+      super.destroy();
+    }
+
     _updateCurrent() {
       const currentId = this._manager.getCurrentSound();
 
