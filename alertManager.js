@@ -141,7 +141,12 @@ export class AlertManager {
           `${GNOME_CUSTOM_DIR}/${bellFile}`,
         );
         try {
-          linkFile.delete(null);
+          const info = linkFile.query_info(
+            Gio.FILE_ATTRIBUTE_STANDARD_IS_SYMLINK,
+            Gio.FileQueryInfoFlags.NOFOLLOW_SYMLINKS,
+            null,
+          );
+          if (info.get_is_symlink()) linkFile.delete(null);
         } catch (e) {
           if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.NOT_FOUND)) throw e;
         }
