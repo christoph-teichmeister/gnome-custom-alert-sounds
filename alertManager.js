@@ -2,8 +2,6 @@ import Gio from "gi://Gio";
 import GLib from "gi://GLib";
 import { gettext as _ } from "resource:///org/gnome/shell/extensions/extension.js";
 
-const DEBUG = false;
-
 const GNOME_CUSTOM_DIR = `${GLib.get_home_dir()}/.local/share/sounds/__custom`;
 const BELL_FILES = ["bell-terminal.ogg", "bell-window-system.ogg"];
 const SOUND_EXTENSIONS = [".ogg", ".oga", ".wav"];
@@ -21,6 +19,19 @@ export class AlertManager {
 
     const theme = this._desktopSettings.get_string("theme-name");
     this._originalTheme = theme !== "__custom" ? theme : "freedesktop";
+    this._originalEventSounds =
+      this._desktopSettings.get_boolean("event-sounds");
+    this._callback = null;
+  }
+
+  // Re-apply the user's last choice (settings are restored on disable()).
+  applySaved() {
+    const id = this._settings.get_string("selected-sound");
+    if (!id) return;
+    const sound = [...this.getBuiltinSounds(), ...this.getCustomSounds()].find(
+      (s) => s.id === id,
+    );
+    if (sound) this.setSound(sound);
   }
 
   get customSoundsDir() {
@@ -80,8 +91,7 @@ export class AlertManager {
       }
       enumerator.close(null);
     } catch (e) {
-      if (DEBUG)
-        console.error(`[custom-alert-sounds] getCustomSounds: ${e.message}`);
+      console.error(`[custom-alert-sounds] getCustomSounds: ${e.message}`);
     }
     return sounds.sort((a, b) => a.label.localeCompare(b.label));
   }
@@ -114,8 +124,7 @@ export class AlertManager {
 
       return target;
     } catch (e) {
-      if (DEBUG)
-        console.error(`[custom-alert-sounds] getCurrentSound: ${e.message}`);
+      console.error(`[custom-alert-sounds] getCurrentSound: ${e.message}`);
       return "default";
     }
   }
@@ -124,6 +133,7 @@ export class AlertManager {
     try {
       if (sound.id === "none") {
         this._desktopSettings.set_boolean("event-sounds", false);
+        this._settings.set_string("selected-sound", "none");
         return;
       }
 
@@ -131,33 +141,76 @@ export class AlertManager {
 
       if (sound.id === "default") {
         this._desktopSettings.set_string("theme-name", this._originalTheme);
+        this._settings.set_string("selected-sound", "");
         return;
       }
 
       this._ensureDir(GNOME_CUSTOM_DIR);
 
-      for (const bellFile of BELL_FILES) {
-        const linkFile = Gio.File.new_for_path(
-          `${GNOME_CUSTOM_DIR}/${bellFile}`,
+      // Never overwrite a file we did not create.
+      const links = BELL_FILES.map((f) =>
+        Gio.File.new_for_path(`${GNOME_CUSTOM_DIR}/${f}`),
+      );
+      const foreign = links.find((f) => this._isForeignFile(f));
+      if (foreign)
+        throw new Error(
+          `${foreign.get_path()} is not a symlink, not touching it`,
         );
-        try {
-          const info = linkFile.query_info(
-            Gio.FILE_ATTRIBUTE_STANDARD_IS_SYMLINK,
-            Gio.FileQueryInfoFlags.NOFOLLOW_SYMLINKS,
-            null,
-          );
-          if (info.get_is_symlink()) linkFile.delete(null);
-        } catch (e) {
-          if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.NOT_FOUND)) throw e;
-        }
-        linkFile.make_symbolic_link(sound.path, null);
+
+      for (const link of links) {
+        this._deleteIfExists(link);
+        link.make_symbolic_link(sound.path, null);
       }
 
       // Toggle theme to force GNOME Shell sound cache reload
       this._desktopSettings.set_string("theme-name", this._originalTheme);
       this._desktopSettings.set_string("theme-name", "__custom");
+      this._settings.set_string("selected-sound", sound.id);
     } catch (e) {
-      if (DEBUG) console.error(`[custom-alert-sounds] setSound: ${e.message}`);
+      console.error(`[custom-alert-sounds] setSound: ${e.message}`);
+    }
+  }
+
+  // True if `file` exists and is not a symlink (i.e. not ours).
+  _isForeignFile(file) {
+    try {
+      return !file
+        .query_info(
+          "standard::is-symlink",
+          Gio.FileQueryInfoFlags.NOFOLLOW_SYMLINKS,
+          null,
+        )
+        .get_is_symlink();
+    } catch (e) {
+      if (e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.NOT_FOUND)) return false;
+      throw e;
+    }
+  }
+
+  _deleteIfExists(file) {
+    try {
+      file.delete(null);
+    } catch (e) {
+      if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.NOT_FOUND)) throw e;
+    }
+  }
+
+  // Undo everything setSound() changed outside the extension.
+  restore() {
+    if (this._desktopSettings.get_string("theme-name") === "__custom")
+      this._desktopSettings.set_string("theme-name", this._originalTheme);
+    this._desktopSettings.set_boolean(
+      "event-sounds",
+      this._originalEventSounds,
+    );
+
+    for (const f of BELL_FILES) {
+      const link = Gio.File.new_for_path(`${GNOME_CUSTOM_DIR}/${f}`);
+      try {
+        if (!this._isForeignFile(link)) this._deleteIfExists(link);
+      } catch (e) {
+        console.error(`[custom-alert-sounds] restore: ${e.message}`);
+      }
     }
   }
 
@@ -175,17 +228,14 @@ export class AlertManager {
     }
 
     if (!player) {
-      if (DEBUG)
-        console.error(
-          "[custom-alert-sounds] previewSound: no audio player found (paplay/pw-play)",
-        );
+      console.error(
+        "[custom-alert-sounds] previewSound: no audio player found (paplay/pw-play)",
+      );
       return;
     }
 
     if (this._currentProc) {
-      try {
-        this._currentProc.force_exit();
-      } catch (_) {}
+      this._currentProc.force_exit();
       this._currentProc = null;
     }
 
@@ -202,8 +252,7 @@ export class AlertManager {
         if (this._currentProc === proc) this._currentProc = null;
       });
     } catch (e) {
-      if (DEBUG)
-        console.error(`[custom-alert-sounds] previewSound: ${e.message}`);
+      console.error(`[custom-alert-sounds] previewSound: ${e.message}`);
     }
   }
 
@@ -218,6 +267,7 @@ export class AlertManager {
   }
 
   watchCustomDir(callback) {
+    this._callback = callback;
     this._startMonitor(callback);
     this._dirSignalId = this._settings.connect(
       "changed::custom-sounds-dir",
@@ -241,8 +291,13 @@ export class AlertManager {
     );
   }
 
+  // Pick up a dir created after enable() (e.g. via "Open Sounds Folder").
+  ensureMonitor() {
+    if (!this._monitor && this._callback) this._startMonitor(this._callback);
+  }
+
   _startMonitor(callback) {
-    this._ensureDir(this.customSoundsDir);
+    if (!Gio.File.new_for_path(this.customSoundsDir).query_exists(null)) return;
     try {
       const dir = Gio.File.new_for_path(this.customSoundsDir);
       this._monitor = dir.monitor_directory(Gio.FileMonitorFlags.NONE, null);
@@ -250,29 +305,35 @@ export class AlertManager {
         callback(),
       );
     } catch (e) {
-      if (DEBUG)
-        console.error(`[custom-alert-sounds] _startMonitor: ${e.message}`);
+      console.error(`[custom-alert-sounds] _startMonitor: ${e.message}`);
     }
+  }
+
+  ensureCustomDir() {
+    this._ensureDir(this.customSoundsDir);
   }
 
   _ensureDir(path) {
     try {
       Gio.File.new_for_path(path).make_directory_with_parents(null);
-    } catch (_) {}
+    } catch (e) {
+      if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.EXISTS))
+        console.error(`[custom-alert-sounds] _ensureDir: ${e.message}`);
+    }
   }
 
   destroy() {
     if (this._currentProc) {
-      try {
-        this._currentProc.force_exit();
-      } catch (_) {}
+      this._currentProc.force_exit();
       this._currentProc = null;
     }
     this._stopMonitor();
+    this.restore();
     if (this._dirSignalId) {
       this._settings.disconnect(this._dirSignalId);
       this._dirSignalId = 0;
     }
+    this._callback = null;
     this._desktopSettings = null;
     this._settings = null;
   }

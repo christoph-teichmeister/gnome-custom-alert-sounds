@@ -7,5 +7,10 @@
       <summary>Custom sounds directory</summary>
       <description>Directory scanned for custom alert sound files. Empty string uses ~/.local/share/custom-alerts</description>
     </key>
+    <key name="selected-sound" type="s">
+      <default>''</default>
+      <summary>Selected alert sound</summary>
+      <description>Id of the sound chosen from the menu. Re-applied when the extension is enabled; the system sound settings are restored when it is disabled. Empty means the system default.</description>
+    </key>
   </schema>
 </schemalist>

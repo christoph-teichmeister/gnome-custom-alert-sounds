@@ -40,7 +40,10 @@ export default class CustomAlertSoundsPreferences extends ExtensionPreferences {
       const dir = settings.get_string("custom-sounds-dir") || defaultDir;
       try {
         Gio.File.new_for_path(dir).make_directory_with_parents(null);
-      } catch (_) {}
+      } catch (e) {
+        if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.EXISTS))
+          console.error(`[custom-alert-sounds] create dir: ${e.message}`);
+      }
       Gtk.show_uri(window, `file://${dir}`, 0);
     });
     row.add_suffix(openBtn);

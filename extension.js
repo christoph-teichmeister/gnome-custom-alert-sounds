@@ -43,6 +43,7 @@ const AlertSoundToggle = GObject.registerClass(
         _("Open Sounds Folder"),
       );
       openFolderItem.connect("activate", () => {
+        manager.ensureCustomDir();
         const uri = Gio.File.new_for_path(manager.customSoundsDir).get_uri();
         Gio.AppInfo.launch_default_for_uri(uri, null);
       });
@@ -56,6 +57,12 @@ const AlertSoundToggle = GObject.registerClass(
         ];
         const current = allSounds.find((s) => s.id === currentId);
         if (current?.path) this._manager.previewSound(current.path);
+      });
+
+      this.menu.connect("open-state-changed", (_menu, open) => {
+        if (!open) return;
+        this._manager.ensureMonitor();
+        this._refreshCustom();
       });
 
       this._populateBuiltin();
@@ -165,6 +172,7 @@ export default class CustomAlertSoundsExtension extends Extension {
   enable() {
     this._settings = this.getSettings();
     this._manager = new AlertManager(this._settings);
+    this._manager.applySaved();
     this._indicator = new AlertSoundIndicator(this._manager);
     Main.panel.statusArea.quickSettings.addExternalIndicator(this._indicator);
   }
