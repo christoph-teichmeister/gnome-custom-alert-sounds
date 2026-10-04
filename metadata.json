@@ -7,10 +7,7 @@
   "url": "https://github.com/christoph-teichmeister/gnome-custom-alert-sounds",
   "settings-schema": "org.gnome.shell.extensions.custom-alert-sounds",
   "gettext-domain": "custom-alert-sounds",
-  "donations": [
-    {
-      "type": "kofi",
-      "url": "https://ko-fi.com/christeichmeister"
-    }
-  ]
+  "donations": {
+    "kofi": "christeichmeister"
+  }
 }
