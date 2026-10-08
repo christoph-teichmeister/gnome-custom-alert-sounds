@@ -1,3 +1,5 @@
+![Custom Alert Sounds](images/social-preview.png)
+
 # Custom Alert Sounds
 
 GNOME Shell extension to select custom alert sounds directly from Quick Settings - no `sudo` required.
