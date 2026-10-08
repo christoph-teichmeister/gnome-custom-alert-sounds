@@ -1,4 +1,4 @@
-![Custom Alert Sounds](images/social-preview.png)
+<p align="center"><img src="images/social-preview.png" width="600" alt="Custom Alert Sounds"></p>
 
 # Custom Alert Sounds
 
